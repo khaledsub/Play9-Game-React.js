@@ -60,8 +60,10 @@ var ButtonFrame = React.createClass( {
         {button}
         <br/><br/>
         <button className="btn btn-warning btn-xs"
-                onClick={this.props.redraw}>
+                onClick={this.props.redraw}
+                disabled={redrawNum===0}>
           <span className="glyphicon glyphicon-refresh"></span>
+          &nbsp;
           {redrawNum}
         </button>
       </div>
@@ -118,6 +120,25 @@ var NumbersFrame = React.createClass( {
   }
 });
 
+var DoneFrame = React.createClass( {
+  render: function() {
+    return (
+      <div id="done-frame" className="well text-center">
+      
+        <h2>{this.props.doneStatus}</h2>
+        <button className="btn btn-success btn-lg"
+                onClick={this.props.resetGame}>
+          <span className="glyphicon glyphicon-refresh">
+            &nbsp;
+            Retry
+          </span>
+        </button>
+      
+      </div>
+    );
+  }
+});
+
 var Game = React.createClass({
   
   getInitialState: function() {
@@ -125,7 +146,8 @@ var Game = React.createClass({
              selectedNums: [],
              usedNums: [],
              correct: null,
-             redrawNum: 0
+             redrawNum: 4,
+             doneStatus: null
     } );
   },
   
@@ -167,18 +189,40 @@ var Game = React.createClass({
       {selectedNums: [], 
        usedNums:usedNums, 
        correct:null,
-       numStars: Math.floor(Math.random()*9) + 1
-      }
+       numStars: Math.floor(Math.random()*9) + 1}
+      ,function() {this.checkDone();}
     )
   },
   
   redraw: function() {
-    if(this.state.redrawNum < 5) {
+    if(this.state.redrawNum > 0) {
       this.setState({numStars: Math.floor(Math.random()*9) + 1,
                      correct: null,
                      selectedNums: [],
-                     redrawNum: this.state.redrawNum+1 })
+                     redrawNum: this.state.redrawNum-1 }
+                     ,function() {this.checkDone();});
     }
+  },
+  
+  checkDone: function() {
+    if(this.state.usedNums.length === 9) {
+      this.setState({doneStatus:"Game Won! Good Job!"})
+    }
+    if(this.state.redrawNum === 0) {
+      this.setState({doneStatus:"Wow! You actually managed to lose this game..."})
+    }
+  },
+  
+  resetGame: function() {
+    this.setState(
+            {numStars: Math.floor(Math.random()*9) + 1,
+             selectedNums: [],
+             usedNums: [],
+             correct: null,
+             redrawNum: 4,
+             doneStatus: null
+            } 
+            )
   },
   
   render: function() {
@@ -186,29 +230,43 @@ var Game = React.createClass({
         usedNums = this.state.usedNums,
         numStars = this.state.numStars,
         redrawNum = this.state.redrawNum,
-        correct = this.state.correct;
+        correct = this.state.correct,
+        doneStatus = this.state.doneStatus;
+        
+    var bottomFrame;
+    if(doneStatus) {
+      bottomFrame = <DoneFrame doneStatus={doneStatus}
+                               resetGame={this.resetGame}/>;
+    }
+    else {
+      bottomFrame = <NumbersFrame selectedNums={selectedNums}
+                        usedNums    ={usedNums}
+                        clickNum    ={this.clickNum} 
+                        acceptAnswer={this.acceptAnswer}/>;
+    }
+    
     return (
       <div id="game">
         <h2>Play 9</h2>
         <hr />
-          <div id="clearfix">
-          
+        <div className="clearfix">
+        
           <StarsFrame numStars = {numStars} />
           <ButtonFrame selectedNums={selectedNums}
                        correct={correct}
                        checkNum={this.checkNum}
                        acceptAnswer={this.acceptAnswer}
                        redraw={this.redraw}
-                       redrawNum={redrawNum}/>
+                       redrawNum={redrawNum}
+                       checkDone={this.checkDone}/>
           <AnswerFrame selectedNums={selectedNums}
                        unclickNum={this.unclickNum} />
+        
+        </div>
           
-          </div>
+          {bottomFrame}
           
-          <NumbersFrame selectedNums={selectedNums}
-                        usedNums    ={usedNums}
-                        clickNum    ={this.clickNum} 
-                        acceptAnswer={this.acceptAnswer}/>
+                        
           
       </div>
     )

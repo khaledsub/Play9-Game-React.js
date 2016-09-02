@@ -19,7 +19,7 @@
   height: 200px;
 }
 
-#numbers-frame {
+#numbers-frame #done-frame {
   float: left;
   width: 100%;
 }
